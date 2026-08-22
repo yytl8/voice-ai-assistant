@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: voice-ai-assistant
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: MONE_API_URL
+        sync: false
+      - key: MONE_API_TOKEN
+        sync: false
+      - key: REALTIME_MODEL
+        value: gpt-realtime-2.1
+      - key: REALTIME_VOICE
+        value: marin
+      - key: REALTIME_SESSION_URL
+        value: https://api.openai.com/v1/realtime/sessions
+      - key: ALLOWED_ORIGINS
+        sync: false
