@@ -1,0 +1,71 @@
+[1mdiff --git a/backend/app/rate_limit.py b/backend/app/rate_limit.py[m
+[1mindex d1270b0..78112e5 100644[m
+[1m--- a/backend/app/rate_limit.py[m
+[1m+++ b/backend/app/rate_limit.py[m
+[36m@@ -1,23 +1,66 @@[m
+ from __future__ import annotations[m
+[32m+[m
+ import time[m
+ from collections import defaultdict[m
+[32m+[m
+[32m+[m[32mfrom fastapi import HTTPException, Request[m
+[32m+[m
+ from .realtime_state import state[m
+[32m+[m[32mfrom .settings import settings[m
+[32m+[m
+ [m
+ _memory = defaultdict(list)[m
+ [m
+[32m+[m
+ async def allow(key: str, limit: int, window_seconds: int) -> bool:[m
+     now = time.time()[m
+[32m+[m
+     if state.redis:[m
+         bucket = f"rl:{key}"[m
+         current = await state.redis.incr(bucket)[m
+[32m+[m
+         if current == 1:[m
+             await state.redis.expire(bucket, window_seconds)[m
+[32m+[m
+         return current <= limit[m
+ [m
+     values = [t for t in _memory[key] if t > now - window_seconds][m
+[32m+[m
+     if len(values) >= limit:[m
+         _memory[key] = values[m
+         return False[m
+[32m+[m
+     values.append(now)[m
+     _memory[key] = values[m
+     return True[m
+[32m+[m
+[32m+[m
+[32m+[m[32masync def rate_limit(request: Request) -> None:[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Global API rate-limit dependency.[m
+[32m+[m
+[32m+[m[32m    Uses the authenticated client IP as the bucket key.[m
+[32m+[m[32m    Redis is used when available; otherwise allow() falls[m
+[32m+[m[32m    back to process memory.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    client = request.client[m
+[32m+[m[32m    client_host = client.host if client else "unknown"[m
+[32m+[m
+[32m+[m[32m    # Respect proxy forwarding when available, while retaining[m
+[32m+[m[32m    # the direct client address as the fallback.[m
+[32m+[m[32m    forwarded_for = request.headers.get("x-forwarded-for")[m
+[32m+[m[32m    if forwarded_for:[m
+[32m+[m[32m        client_host = forwarded_for.split(",")[0].strip()[m
+[32m+[m
+[32m+[m[32m    allowed = await allow([m
+[32m+[m[32m        key=f"api:{client_host}",[m
+[32m+[m[32m        limit=settings.rate_limit_per_minute,[m
+[32m+[m[32m        window_seconds=60,[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    if not allowed:[m
+[32m+[m[32m        raise HTTPException([m
+[32m+[m[32m            status_code=429,[m
+[32m+[m[32m            detail="Too many requests. Please try again later.",[m
+[32m+[m[32m            headers={"Retry-After": "60"},[m
+[32m+[m[32m        )[m
