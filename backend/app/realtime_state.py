@@ -1,5 +1,5 @@
 import json
-from .settings import settings
+from ..settings import settings
 try:
     from redis.asyncio import Redis
 except Exception:

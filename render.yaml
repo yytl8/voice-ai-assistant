@@ -10,6 +10,8 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
       - key: AI_API_KEY
         sync: false
       - key: MONE_API_URL
@@ -22,5 +24,5 @@ services:
         value: marin
       - key: REALTIME_SESSION_URL
         value: https://api.openai.com/v1/realtime/sessions
-      - key: CORS_ORIGINS
+      - key: ALLOWED_ORIGINS
         sync: false

@@ -1,5 +1,5 @@
 import httpx
-from .settings import settings
+from ..settings import settings
 
 async def create_ephemeral_session(*, instructions, tools):
     if not settings.ai_api_key:

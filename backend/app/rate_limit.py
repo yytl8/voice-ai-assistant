@@ -17,11 +17,14 @@ async def allow(key: str, limit: int, window_seconds: int) -> bool:
     if state.redis:
         bucket = f"rl:{key}"
         current = await state.redis.incr(bucket)
+
         if current == 1:
             await state.redis.expire(bucket, window_seconds)
+
         return current <= limit
 
     values = [t for t in _memory[key] if t > now - window_seconds]
+
     if len(values) >= limit:
         _memory[key] = values
         return False
@@ -32,7 +35,8 @@ async def allow(key: str, limit: int, window_seconds: int) -> bool:
 
 
 async def rate_limit(request: Request) -> None:
-    """Global per-client request rate limiter used by the request middleware."""
+    """Global per-client request rate limiter for the HTTP middleware."""
+
     forwarded_for = request.headers.get("x-forwarded-for")
 
     if forwarded_for:
@@ -45,4 +49,7 @@ async def rate_limit(request: Request) -> None:
     key = f"ip:{client_ip}"
 
     if not await allow(key, settings.rate_limit_per_minute, 60):
-        raise HTTPException(status_code=429, detail="Too many requests")
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests",
+        )

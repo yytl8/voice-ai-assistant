@@ -8,17 +8,24 @@ class Settings(BaseSettings):
     environment: str = "development"
     app_env: str = "development"
     database_url: str = "postgresql+asyncpg://voice:voice@localhost:5432/voice_ai"
-    redis_url: str = ""
     ai_base_url: str = "https://api.openai.com/v1"
     ai_api_key: str = ""
     attachment_dir: str = "/tmp/voice-ai-attachments"
     rate_limit_per_minute: int = 60
     tool_rate_limit_per_minute: int = 30
     ai_model: str = "gpt-realtime-2.1"
+    # Realtime model remains separate from the normal chat model.
+    openai_chat_model: str = "gpt-4.1-mini"
+
+    # Optional secondary AI providers.
+    anthropic_api_key: str = ""
+    anthropic_base_url: str = "https://api.anthropic.com"
+    anthropic_model: str = "claude-sonnet-4-20250514"
+
+    gemini_api_key: str = ""
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    gemini_model: str = "gemini-2.5-flash"
     voice_name: str = "marin"
-    realtime_model: str = "gpt-realtime-2.1"
-    realtime_voice: str = "marin"
-    realtime_session_url: str = "https://api.openai.com/v1/realtime/sessions"
 
     jwt_secret: str = "CHANGE_ME_IN_PRODUCTION"
     jwt_algorithm: str = "HS256"
