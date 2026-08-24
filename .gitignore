@@ -1,17 +1,37 @@
+# Python
 __pycache__/
 *.py[cod]
+*.pyo
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.egg-info/
+
+# Virtual environments
 .venv/
 venv/
+env/
+
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Node
 node_modules/
 .next/
-coverage/
+out/
 dist/
-build/
-*.log
+
+# Coverage
+.coverage
+htmlcov/
+
+# OS / editor
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log

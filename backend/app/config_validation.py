@@ -1,7 +1,16 @@
 from .settings import settings
+
+
 def validate_production():
-    if settings.environment.lower()!="production": return []
-    vals={"DATABASE_URL":settings.database_url,"REDIS_URL":settings.redis_url,
-          "AI_API_KEY":settings.ai_api_key,"MONE_API_URL":settings.mone_api_url,
-          "MONE_API_TOKEN":settings.mone_api_token}
-    return [k for k,v in vals.items() if not v]
+    if settings.app_env.lower() != "production":
+        return []
+
+    required = {
+        "DATABASE_URL": settings.database_url,
+        "AI_API_KEY": settings.ai_api_key,
+    }
+
+    if settings.jwt_secret == "CHANGE_ME_IN_PRODUCTION":
+        required["JWT_SECRET"] = ""
+
+    return [key for key, value in required.items() if not value]

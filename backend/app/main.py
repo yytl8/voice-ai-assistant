@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .observability import configure
 configure()
 
 from .auth import create_access_token, current_user, hash_password, verify_password

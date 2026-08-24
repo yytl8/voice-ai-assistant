@@ -1,0 +1,44 @@
+[1mdiff --git a/backend/app/config_validation.py b/backend/app/config_validation.py[m
+[1mindex c2a58e8..15d4a41 100644[m
+[1m--- a/backend/app/config_validation.py[m
+[1m+++ b/backend/app/config_validation.py[m
+[36m@@ -1,7 +1,14 @@[m
+ from .settings import settings[m
+[32m+[m
+[32m+[m
+ def validate_production():[m
+[31m-    if settings.environment.lower()!="production": return [][m
+[31m-    vals={"DATABASE_URL":settings.database_url,"REDIS_URL":settings.redis_url,[m
+[31m-          "AI_API_KEY":settings.ai_api_key,"MONE_API_URL":settings.mone_api_url,[m
+[31m-          "MONE_API_TOKEN":settings.mone_api_token}[m
+[31m-    return [k for k,v in vals.items() if not v][m
+[32m+[m[32m    if settings.app_env.lower() != "production":[m
+[32m+[m[32m        return [][m
+[32m+[m
+[32m+[m[32m    required = {[m
+[32m+[m[32m        "DATABASE_URL": settings.database_url,[m
+[32m+[m[32m        "AI_API_KEY": settings.ai_api_key,[m
+[32m+[m[32m        "JWT_SECRET": settings.jwt_secret,[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return [key for key, value in required.items() if not value][m
+[1mdiff --git a/backend/app/settings.py b/backend/app/settings.py[m
+[1mindex 7d50a15..370c2b2 100644[m
+[1m--- a/backend/app/settings.py[m
+[1m+++ b/backend/app/settings.py[m
+[36m@@ -8,6 +8,7 @@[m [mclass Settings(BaseSettings):[m
+     environment: str = "development"[m
+     app_env: str = "development"[m
+     database_url: str = "postgresql+asyncpg://voice:voice@localhost:5432/voice_ai"[m
+[32m+[m[32m    redis_url: str = ""[m
+     ai_base_url: str = "https://api.openai.com/v1"[m
+     ai_api_key: str = ""[m
+     attachment_dir: str = "/tmp/voice-ai-attachments"[m
+[36m@@ -23,7 +24,6 @@[m [mclass Settings(BaseSettings):[m
+ [m
+     cors_origins: list[str] = ["http://localhost:3000"][m
+     max_request_body_mb: int = 15[m
+[31m-    rate_limit_per_minute: int = 60[m
+ [m
+     mone_api_url: str = ""[m
+     mone_api_token: str = ""[m

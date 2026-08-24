@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     app_env: str = "development"
     database_url: str = "postgresql+asyncpg://voice:voice@localhost:5432/voice_ai"
+    redis_url: str = ""
     ai_base_url: str = "https://api.openai.com/v1"
     ai_api_key: str = ""
     attachment_dir: str = "/tmp/voice-ai-attachments"
@@ -15,6 +16,9 @@ class Settings(BaseSettings):
     tool_rate_limit_per_minute: int = 30
     ai_model: str = "gpt-realtime-2.1"
     voice_name: str = "marin"
+    realtime_model: str = "gpt-realtime-2.1"
+    realtime_voice: str = "marin"
+    realtime_session_url: str = "https://api.openai.com/v1/realtime/sessions"
 
     jwt_secret: str = "CHANGE_ME_IN_PRODUCTION"
     jwt_algorithm: str = "HS256"
@@ -23,7 +27,6 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000"]
     max_request_body_mb: int = 15
-    rate_limit_per_minute: int = 60
 
     mone_api_url: str = ""
     mone_api_token: str = ""
