@@ -1,5 +1,10 @@
 services:
   - type: web
+    # NOTE: kept as the original name on purpose. Renaming this in the
+    # Blueprint would make Render treat it as a brand-new service on the next
+    # sync instead of updating the existing one at
+    # voice-ai-assistant-hx7k.onrender.com, orphaning its DATABASE_URL and
+    # other dashboard-only secrets.
     name: voice-ai-assistant
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
@@ -24,5 +29,31 @@ services:
         value: marin
       - key: REALTIME_SESSION_URL
         value: https://api.openai.com/v1/realtime/sessions
-      - key: ALLOWED_ORIGINS
+      # This is the variable app/settings.py and the CORS middleware actually
+      # read (`cors_origins`). It used to be named ALLOWED_ORIGINS here, which
+      # matches nothing in the code, so CORS silently fell back to its
+      # http://localhost:3000 default in production.
+      #
+      # Render's Blueprint spec does not support string interpolation, so
+      # `fromService`/`property: host` would only give a bare hostname (no
+      # scheme, no JSON brackets) -- not the `["https://..."]` value this
+      # field needs. Set the real value by hand in the dashboard once the
+      # frontend service's onrender.com URL is known, e.g.:
+      #   CORS_ORIGINS=["https://voice-ai-frontend-xxxx.onrender.com"]
+      - key: CORS_ORIGINS
+        sync: false
+
+  - type: web
+    name: voice-ai-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Baked into the client bundle at build time (see frontend/Dockerfile
+      # for why this must be a build arg, not just a runtime env var).
+      # Same interpolation limitation as above: set this by hand to the
+      # backend's real URL, e.g.:
+      #   NEXT_PUBLIC_API_URL=https://voice-ai-backend-xxxx.onrender.com
+      - key: NEXT_PUBLIC_API_URL
         sync: false

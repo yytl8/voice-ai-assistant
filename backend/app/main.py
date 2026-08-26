@@ -226,7 +226,10 @@ async def security_headers(request, call_next):
 
 @app.get("/ready")
 async def readiness():
-    missing=validate_production()
+    try:
+        missing = validate_production()
+    except Exception:
+        return {"ready": False, "database": False, "redis": False}
     if missing: return {"ready":False,"missing_configuration":missing}
     try:
         async for db in get_db():
