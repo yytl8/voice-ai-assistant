@@ -10,7 +10,7 @@ The backend now exposes a provider-agnostic AI Gateway.
 
 ## Supported providers
 
-- OpenAI: `AI_API_KEY`
+- OpenAI: `provider-specific API keys (GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY, etc.)`
 - Anthropic/Claude: `ANTHROPIC_API_KEY`
 - Google Gemini: `GEMINI_API_KEY`
 - Groq: `GROQ_API_KEY`
@@ -28,7 +28,7 @@ OPENROUTER_API_KEY=...
 Optional:
 
 ```env
-AI_API_KEY=...
+provider-specific API keys (GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY, etc.)=...
 ANTHROPIC_API_KEY=...
 GEMINI_API_KEY=...
 ```

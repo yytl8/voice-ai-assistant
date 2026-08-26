@@ -1,12 +1,12 @@
 # Multi-provider AI configuration
 
-The backend supports a provider-agnostic chat API with optional fallback.
+The backend supports a provider-agnostic chat API with ordered fallback. AI_API_KEY is optional for startup and normal chat; a no-key Demo provider is always available.
 
 ## Environment variables
 
 ```env
 # Existing OpenAI / Realtime configuration
-AI_API_KEY=
+AI_API_KEY=  # legacy/optional
 AI_BASE_URL=https://api.openai.com/v1
 AI_MODEL=gpt-realtime-2.1
 
@@ -23,6 +23,10 @@ GEMINI_API_KEY=
 GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 GEMINI_MODEL=gemini-2.5-flash
 ```
+
+## Provider priority
+
+Use model: auto to try Groq, OpenRouter Free, Gemini, OpenAI, Claude, then Demo.
 
 ## Endpoints
 

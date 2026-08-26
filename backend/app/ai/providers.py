@@ -26,6 +26,17 @@ class AIProvider:
         raise NotImplementedError
 
 
+class DemoProvider(AIProvider):
+    """No-key fallback used when no external AI provider is configured."""
+    name = "demo"
+    async def chat(self, messages: list[dict[str, str]], model: str = "demo", **kwargs: Any) -> AIResponse:
+        last_user = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+        content = ("وضع التشغيل التجريبي فعال حالياً. لا يوجد مزود AI خارجي مهيأ. "
+                   "أضف GEMINI_API_KEY أو GROQ_API_KEY أو OPENROUTER_API_KEY لتفعيل الإجابات الذكية الحقيقية.")
+        if last_user: content += f" رسالتك: {last_user[:300]}"
+        return AIResponse(provider=self.name, model=model, content=content)
+
+
 class OpenAIProvider(AIProvider):
     name = "openai"
 

@@ -17,9 +17,7 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
-      - key: AI_API_KEY
-        sync: false
-      # Optional AI providers. Add the corresponding key in Render.
+      # Optional AI chat providers. Configure one or more keys; AI_API_KEY is not required.
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: GEMINI_API_KEY
@@ -34,6 +32,10 @@ services:
         sync: false
       - key: MONE_API_TOKEN
         sync: false
+      - key: REALTIME_API_KEY
+        sync: false
+      - key: REALTIME_BASE_URL
+        value: https://api.openai.com/v1
       - key: REALTIME_MODEL
         value: gpt-realtime-2.1
       - key: REALTIME_VOICE

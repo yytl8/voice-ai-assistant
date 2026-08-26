@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     tool_rate_limit_per_minute: int = 30
     ai_model: str = "gpt-realtime-2.1"
+    realtime_api_key: str = ""
+    realtime_base_url: str = "https://api.openai.com/v1"
+    realtime_model: str = "gpt-realtime-2.1"
     # Realtime model remains separate from the normal chat model.
     openai_chat_model: str = "gpt-4.1-mini"
 

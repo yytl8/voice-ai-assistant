@@ -8,17 +8,17 @@ Endpoints:
 
 STT fallback:
 1. Groq Whisper (`GROQ_API_KEY`)
-2. OpenAI transcription (`OPENAI_API_KEY`)
+2. OpenAI transcription (`OPENREALTIME_API_KEY (or legacy AI_API_KEY)`)
 
 TTS fallback:
 1. ElevenLabs (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`)
-2. OpenAI TTS (`OPENAI_API_KEY`)
+2. OpenAI TTS (`OPENREALTIME_API_KEY (or legacy AI_API_KEY)`)
 
 Recommended Render variables:
 
 ```env
 GROQ_API_KEY=...
-OPENAI_API_KEY=...
+OPENREALTIME_API_KEY (or legacy AI_API_KEY)=...
 ELEVENLABS_API_KEY=...
 ELEVENLABS_VOICE_ID=...
 GROQ_STT_MODEL=whisper-large-v3-turbo

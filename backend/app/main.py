@@ -326,7 +326,7 @@ async def ai_chat(
     user: User = Depends(current_user),
 ):
     messages = payload.get("messages")
-    model = payload.get("model", "primary")
+    model = payload.get("model", "auto")
     fallback = payload.get("fallback", [])
 
     if not isinstance(messages, list) or not messages:
@@ -384,11 +384,9 @@ async def ai_chat(
         if key in payload
     }
 
-    if not ai_router.available_models():
-        raise HTTPException(
-            status_code=503,
-            detail="No AI provider is configured. Configure at least one AI API key in Render.",
-        )
+
+    if model == "primary" and not any(m["alias"] == "primary" for m in ai_router.available_models()):
+        model = "auto"
 
     try:
         result = await ai_router.chat(
@@ -472,8 +470,10 @@ async def realtime_session(
     request: Request,
     user: User = Depends(current_user),
 ):
-    if not settings.ai_api_key:
-        raise HTTPException(status_code=503, detail="AI_API_KEY is not configured")
+    realtime_api_key = getattr(settings, "realtime_api_key", "") or settings.ai_api_key
+    realtime_base_url = getattr(settings, "realtime_base_url", "") or settings.ai_base_url
+    if not realtime_api_key:
+        raise HTTPException(status_code=503, detail="Realtime voice provider is not configured. Configure REALTIME_API_KEY (or legacy AI_API_KEY) for live voice sessions.")
 
     sdp = (await request.body()).decode("utf-8", errors="replace").strip()
     if not sdp:
@@ -481,19 +481,19 @@ async def realtime_session(
 
     session = {
         "type": "realtime",
-        "model": settings.ai_model,
+        "model": getattr(settings, "realtime_model", "") or settings.ai_model,
         "audio": {"output": {"voice": settings.voice_name}},
         "instructions": settings.system_instructions,
         "tools": all_tool_definitions(),
         "tool_choice": "auto",
     }
 
-    url = settings.ai_base_url.rstrip("/") + "/realtime/calls"
+    url = realtime_base_url.rstrip("/") + "/realtime/calls"
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(
                 url,
-                headers={"Authorization": f"Bearer {settings.ai_api_key}"},
+                headers={"Authorization": f"Bearer {realtime_api_key}"},
                 files={
                     "sdp": ("offer.sdp", sdp, "application/sdp"),
                     "session": (None, json.dumps(session, ensure_ascii=False), "application/json"),

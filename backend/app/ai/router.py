@@ -11,6 +11,7 @@ from .providers import (
     OpenAIProvider,
     GroqProvider,
     OpenRouterProvider,
+    DemoProvider,
 )
 
 
@@ -73,6 +74,7 @@ class AIRouter:
                 "gemini",
                 "primary",
                 "claude",
+                "demo",
             ]
             candidates = [alias for alias in preferred if alias in self.models]
         else:
@@ -120,6 +122,9 @@ class AIRouter:
 
 def build_ai_router(settings) -> AIRouter:
     router = AIRouter()
+
+    router.register_provider("demo", DemoProvider())
+    router.register_model("demo", "demo", "demo")
 
     # OpenAI
     if settings.ai_api_key:
