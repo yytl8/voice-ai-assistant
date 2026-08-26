@@ -40,16 +40,26 @@ export async function connectRealtime(
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  const answer = await fetch("https://api.openai.com/v1/realtime/calls", {
+  // Send the SDP offer to our backend proxy. The backend performs the
+  // provider-specific multipart/form-data request and keeps provider keys
+  // off the browser. Never call the Realtime provider directly from here.
+  const answer = await fetch(`/api/realtime/session`, {
     method: "POST",
+    credentials: "include",
     headers: {
-      Authorization: `Bearer ${session.client_secret}`,
       "Content-Type": "application/sdp",
     },
-    body: offer.sdp,
+    body: offer.sdp || "",
   });
   if (!answer.ok) throw new Error(await answer.text());
-  await pc.setRemoteDescription({type: "answer", sdp: await answer.text()});
+  const answerType = answer.headers.get("content-type") || "";
+  const answerBody = await answer.text();
+  let answerSdp = answerBody;
+  if (answerType.includes("application/json")) {
+    try { answerSdp = JSON.parse(answerBody)?.sdp || ""; } catch {}
+  }
+  if (!answerSdp) throw new Error("Backend did not return a valid SDP answer");
+  await pc.setRemoteDescription({type: "answer", sdp: answerSdp});
 
   const close = () => {
     stream.getTracks().forEach(t => t.stop());

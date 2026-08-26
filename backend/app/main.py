@@ -505,6 +505,11 @@ async def realtime_session(
     if response.status_code >= 400:
         raise HTTPException(status_code=response.status_code, detail=response.text[:2000])
 
-    return {"sdp": response.text, "user_id": user.id}
+    from fastapi.responses import Response
+    return Response(
+        content=response.text,
+        media_type="application/sdp",
+        headers={"X-Realtime-Provider": "proxy"},
+    )
 
 app.include_router(voice_router)

@@ -124,9 +124,16 @@ export default function VoiceAssistant({ token, onLogout }: { token: string; onL
       dc.onopen = () => { setConnected(true); setStatus('listening'); sendEvent({type: 'session.update', session: {type: 'realtime', instructions: 'أنت مساعد صوتي عربي طبيعي وسريع. استخدم الأدوات عند الحاجة ولا تخترع نتائجها.', audio: {input: {transcription: {model: 'gpt-4o-mini-transcribe', language: 'ar'}, turn_detection: {type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 500, create_response: true, interrupt_response: true}},}, output_modalities: ['audio']}}); };
       dc.onmessage = e => { try { handleServerEvent(JSON.parse(e.data)); } catch {} };
       const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-      const response = await fetch(`${API_URL}/api/realtime/session`, {method: 'POST', headers: {'Content-Type': 'application/sdp', Authorization: `Bearer ${token}`}, body: offer.sdp});
+      const response = await fetch(`${API_URL}/api/realtime/session`, {method: 'POST', headers: {'Content-Type': 'application/sdp', Authorization: `Bearer ${token}`}, body: offer.sdp || ''});
       if (!response.ok) throw new Error(await readApiError(response, 'تعذر إنشاء جلسة الصوت'));
-      await pc.setRemoteDescription({type: 'answer', sdp: await response.text()});
+      const answerType = response.headers.get('content-type') || '';
+      const answerText = await response.text();
+      let answerSdp = answerText;
+      if (answerType.includes('application/json')) {
+        try { answerSdp = JSON.parse(answerText)?.sdp || ''; } catch {}
+      }
+      if (!answerSdp) throw new Error('لم يصل SDP صالح من خادم الصوت');
+      await pc.setRemoteDescription({type: 'answer', sdp: answerSdp});
     } catch (e) { setError(e instanceof Error ? e.message : 'تعذر تشغيل الميكروفون'); setStatus('error'); await stopSession(); }
   }
 
