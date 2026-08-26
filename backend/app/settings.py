@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
     gemini_model: str = "gemini-2.5-flash"
+    # Groq (OpenAI-compatible)
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "llama-3.3-70b-versatile"
+
+    # OpenRouter (OpenAI-compatible; supports many providers/models)
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_model: str = "openrouter/free"
+    openrouter_site_url: str = ""
+    openrouter_site_name: str = "Voice AI Assistant"
     voice_name: str = "marin"
 
     jwt_secret: str = "CHANGE_ME_IN_PRODUCTION"

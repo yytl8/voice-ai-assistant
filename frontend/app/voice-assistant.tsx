@@ -15,8 +15,9 @@ export default function VoiceAssistant({ token, onLogout }: { token: string; onL
   const [error, setError] = useState('');
   const [memories, setMemories] = useState<{key: string; value: string}[]>([]);
   const [models, setModels] = useState<Model[]>([]);
-  const [selectedModel, setSelectedModel] = useState('primary');
+  const [selectedModel, setSelectedModel] = useState('auto');
   const [fallbacks, setFallbacks] = useState<string[]>([]);
+  const [autoMode, setAutoMode] = useState(true);
   const [text, setText] = useState('');
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
@@ -35,7 +36,14 @@ export default function VoiceAssistant({ token, onLogout }: { token: string; onL
       if (memoryData) setMemories(memoryData.memories || []);
       const available = modelData?.models || [];
       setModels(available);
-      if (available.length && !available.some((m: Model) => m.alias === selectedModel)) setSelectedModel(available[0].alias);
+      const recommended = modelData?.recommended_model;
+      const order = Array.isArray(modelData?.fallback_order) ? modelData.fallback_order : [];
+      if (recommended) {
+        setSelectedModel(recommended);
+        setFallbacks(order.filter((x: string) => x !== recommended));
+      } else if (available.length && !available.some((m: Model) => m.alias === selectedModel)) {
+        setSelectedModel(available[0].alias);
+      }
     }).catch(() => {});
   }, [token]);
 
@@ -57,8 +65,8 @@ export default function VoiceAssistant({ token, onLogout }: { token: string; onL
       const res = await apiFetch('/api/ai/chat', token, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          model: selectedModel,
-          fallback: fallbacks,
+          model: autoMode ? 'auto' : selectedModel,
+          fallback: autoMode ? [] : fallbacks,
           messages: history.map(m => ({ role: m.role, content: m.content })),
         }),
       });
@@ -148,10 +156,14 @@ export default function VoiceAssistant({ token, onLogout }: { token: string; onL
       <div className="topbar">
         <div className="brand"><span className="brandDot" />VOICE AI</div>
         <div className="topbarActions">
-          <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} disabled={!models.length || busy} aria-label="النموذج">
+          <label className="autoModel">
+            <input type="checkbox" checked={autoMode} onChange={e => setAutoMode(e.target.checked)} disabled={!models.length || busy} />
+            تلقائي
+          </label>
+          <select value={selectedModel} onChange={e => { setSelectedModel(e.target.value); setAutoMode(false); }} disabled={!models.length || busy || autoMode} aria-label="النموذج">
             {models.length ? models.map(m => <option key={m.alias} value={m.alias}>{m.alias} · {m.provider}</option>) : <option value="primary">primary</option>}
           </select>
-          {models.length > 1 && <select value={fallbacks[0] || ''} onChange={e => setFallbacks(e.target.value ? [e.target.value] : [])} aria-label="النموذج الاحتياطي"><option value="">بدون احتياطي</option>{models.filter(m => m.alias !== selectedModel).map(m => <option key={m.alias} value={m.alias}>احتياطي: {m.alias}</option>)}</select>}
+          {!autoMode && models.length > 1 && <select value={fallbacks[0] || ''} onChange={e => setFallbacks(e.target.value ? [e.target.value] : [])} aria-label="النموذج الاحتياطي"><option value="">بدون احتياطي</option>{models.filter(m => m.alias !== selectedModel).map(m => <option key={m.alias} value={m.alias}>احتياطي: {m.alias}</option>)}</select>}
           <div className={`connection ${connected ? 'online' : ''}`}>{connected ? 'Agent متصل' : 'غير متصل'}</div>
           <button className="logoutButton" onClick={logout}>خروج</button>
         </div>

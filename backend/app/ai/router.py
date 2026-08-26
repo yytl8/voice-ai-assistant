@@ -9,6 +9,8 @@ from .providers import (
     AnthropicProvider,
     GeminiProvider,
     OpenAIProvider,
+    GroqProvider,
+    OpenRouterProvider,
 )
 
 
@@ -62,7 +64,19 @@ class AIRouter:
         fallback: list[str] | None = None,
         **kwargs: Any,
     ) -> AIResponse:
-        candidates = [model]
+        # "auto" is intentionally deterministic: prefer free/low-cost
+        # providers first, then paid providers as a final fallback.
+        if model == "auto":
+            preferred = [
+                "groq",
+                "openrouter-free",
+                "gemini",
+                "primary",
+                "claude",
+            ]
+            candidates = [alias for alias in preferred if alias in self.models]
+        else:
+            candidates = [model]
 
         for fallback_model in fallback or []:
             if fallback_model not in candidates:
@@ -107,6 +121,7 @@ class AIRouter:
 def build_ai_router(settings) -> AIRouter:
     router = AIRouter()
 
+    # OpenAI
     if settings.ai_api_key:
         router.register_provider(
             "openai",
@@ -115,13 +130,9 @@ def build_ai_router(settings) -> AIRouter:
                 base_url=settings.ai_base_url,
             ),
         )
+        router.register_model("primary", "openai", settings.openai_chat_model)
 
-        router.register_model(
-            "primary",
-            "openai",
-            settings.openai_chat_model,
-        )
-
+    # Anthropic / Claude
     if settings.anthropic_api_key:
         router.register_provider(
             "anthropic",
@@ -130,13 +141,9 @@ def build_ai_router(settings) -> AIRouter:
                 base_url=settings.anthropic_base_url,
             ),
         )
+        router.register_model("claude", "anthropic", settings.anthropic_model)
 
-        router.register_model(
-            "claude",
-            "anthropic",
-            settings.anthropic_model,
-        )
-
+    # Google Gemini
     if settings.gemini_api_key:
         router.register_provider(
             "gemini",
@@ -145,11 +152,35 @@ def build_ai_router(settings) -> AIRouter:
                 base_url=settings.gemini_base_url,
             ),
         )
+        router.register_model("gemini", "gemini", settings.gemini_model)
 
+    # Groq: fast, OpenAI-compatible API
+    if settings.groq_api_key:
+        router.register_provider(
+            "groq",
+            GroqProvider(
+                api_key=settings.groq_api_key,
+                base_url=settings.groq_base_url,
+            ),
+        )
+        router.register_model("groq", "groq", settings.groq_model)
+
+    # OpenRouter: one gateway for many models, including free-model routing
+    if settings.openrouter_api_key:
+        router.register_provider(
+            "openrouter",
+            OpenRouterProvider(
+                api_key=settings.openrouter_api_key,
+                base_url=settings.openrouter_base_url,
+                site_url=settings.openrouter_site_url,
+                site_name=settings.openrouter_site_name,
+            ),
+        )
         router.register_model(
-            "gemini",
-            "gemini",
-            settings.gemini_model,
+            "openrouter-free",
+            "openrouter",
+            settings.openrouter_model,
         )
 
     return router
+

@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .observability import configure
+from app.voice.api import router as voice_router
 configure()
 
 from .auth import create_access_token, current_user, hash_password, verify_password
@@ -292,7 +293,31 @@ async def me(user: User = Depends(current_user)):
 
 @app.get("/api/ai/models")
 async def list_ai_models(user: User = Depends(current_user)):
-    return {"models": ai_router.available_models()}
+    models = ai_router.available_models()
+    aliases = {item["alias"] for item in models}
+    preferred = ["groq", "openrouter-free", "gemini", "primary", "claude"]
+    recommended = next((alias for alias in preferred if alias in aliases), None)
+    return {
+        "models": models,
+        "auto": True,
+        "recommended_model": recommended,
+        "fallback_order": [alias for alias in preferred if alias in aliases],
+    }
+
+
+
+@app.get("/api/ai/providers")
+async def ai_providers(user: User = Depends(current_user)):
+    """Return configured provider/model availability without exposing API keys."""
+    models = ai_router.available_models()
+    providers = {}
+    for item in models:
+        providers[item["provider"]] = True
+    return {
+        "providers": providers,
+        "models": models,
+        "default_model": "primary" if any(m["alias"] == "primary" for m in models) else (models[0]["alias"] if models else None),
+    }
 
 
 @app.post("/api/ai/chat")
@@ -358,6 +383,12 @@ async def ai_chat(
         for key in allowed_generation_keys
         if key in payload
     }
+
+    if not ai_router.available_models():
+        raise HTTPException(
+            status_code=503,
+            detail="No AI provider is configured. Configure at least one AI API key in Render.",
+        )
 
     try:
         result = await ai_router.chat(
@@ -475,3 +506,5 @@ async def realtime_session(
         raise HTTPException(status_code=response.status_code, detail=response.text[:2000])
 
     return {"sdp": response.text, "user_id": user.id}
+
+app.include_router(voice_router)

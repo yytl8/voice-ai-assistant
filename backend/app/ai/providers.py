@@ -204,3 +204,82 @@ class GeminiProvider(AIProvider):
             content=content,
             raw=data,
         )
+
+
+class OpenAICompatibleProvider(AIProvider):
+    """Provider for OpenAI-compatible APIs such as Groq and OpenRouter."""
+
+    def __init__(
+        self,
+        name: str,
+        api_key: str,
+        base_url: str,
+        extra_headers: dict[str, str] | None = None,
+    ):
+        self.name = name
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.extra_headers = extra_headers or {}
+
+    async def chat(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        **kwargs: Any,
+    ) -> AIResponse:
+        payload = {"model": model, "messages": messages, **kwargs}
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            **self.extra_headers,
+        }
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+
+        response.raise_for_status()
+        data = response.json()
+        choices = data.get("choices") or []
+        if not choices:
+            raise RuntimeError(f"{self.name} returned no choices")
+
+        message = choices[0].get("message") or {}
+        content = message.get("content", "")
+        if not isinstance(content, str):
+            content = str(content)
+
+        return AIResponse(
+            provider=self.name,
+            model=model,
+            content=content,
+            raw=data,
+        )
+
+
+class GroqProvider(OpenAICompatibleProvider):
+    name = "groq"
+
+    def __init__(self, api_key: str, base_url: str = "https://api.groq.com/openai/v1"):
+        super().__init__("groq", api_key, base_url)
+
+
+class OpenRouterProvider(OpenAICompatibleProvider):
+    name = "openrouter"
+
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str = "https://openrouter.ai/api/v1",
+        site_url: str = "",
+        site_name: str = "Voice AI Assistant",
+    ):
+        extra = {}
+        if site_url:
+            extra["HTTP-Referer"] = site_url
+        if site_name:
+            extra["X-Title"] = site_name
+        super().__init__("openrouter", api_key, base_url, extra)

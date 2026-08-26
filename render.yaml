@@ -19,6 +19,17 @@ services:
         sync: false
       - key: AI_API_KEY
         sync: false
+      # Optional AI providers. Add the corresponding key in Render.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_SITE_URL
+        sync: false
       - key: MONE_API_URL
         sync: false
       - key: MONE_API_TOKEN
